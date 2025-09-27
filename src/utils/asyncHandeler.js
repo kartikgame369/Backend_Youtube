@@ -1,8 +1,9 @@
 const asyncHandler =(requestHandler)=>{
-    (res,req,next)=>{
+   return (res,req,next)=>{
         Promise.resolve(requestHandler(res,req,next)).catch
         ((err)=> next(err))
     }
+
 }
 // higher order functions 
 // those funcations can accept the paratmeter and arguments
