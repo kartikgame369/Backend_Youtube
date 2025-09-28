@@ -2,13 +2,13 @@ import mongoose from "mongoose";
 import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 const vedioSchema = new mongoose.Schema({
     videoFile:{
-        type:String,
+        type:String,//cloudinary url
         required:true,
 
 
     },
     thumbnails:{
-        type:String,
+        type:String,//cloudinary url
         required:true
     },
     title:{
@@ -26,7 +26,7 @@ const vedioSchema = new mongoose.Schema({
     },
     views:{
         type:Number,
-        default:true
+        default:0
 
     },
     isPublished:{

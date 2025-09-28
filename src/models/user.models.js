@@ -1,4 +1,4 @@
-import mongoose, { mongo } from "mongoose";
+import mongoose from "mongoose"
 import jwt from "jsonwebtoken"
 import bcrypt from "bcrypt"
 
@@ -31,6 +31,7 @@ const userSchema = new mongoose.Schema({
     },
     coverImage:{
         type:String
+        // cloudinary url
     },
     watchHistory:[
         {
@@ -63,10 +64,10 @@ userSchema.methods.isPasswordCorrect = async function(password){
 userSchema.methods.generateAccessToken = function(){
    return jwt.sign(
         {
-        _id:this._id,
-        email:this.email,
-        username:this.username,
-        fullname:this.fullname
+        _id: this._id,
+        email: this.email,
+        username: this.username,
+        fullName: this.fullName
         },
         process.env.ACCESS_TOKEN_SECRET,
         {
@@ -77,7 +78,7 @@ userSchema.methods.generateAccessToken = function(){
 userSchema.methods.generateRefreshToken=function(){
     return jwt.sign(
         {
-        _id:this._id
+        _id:this._id,
         
         },
         process.env.REFRESH_TOKEN_SECRET,
