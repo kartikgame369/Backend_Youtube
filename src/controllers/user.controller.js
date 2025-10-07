@@ -5,6 +5,22 @@ import {User} from "../models/user.models.js"
 import { uploadOnCloudinary } from '../utils/cloudinary.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 
+const generateAccessAndRefereshToken = async (userId) => {
+  try {
+    await User.findById(userId)
+    const accessToken = user.generateAccessToken()
+    const refereshToken = user.generateRefreshToken()
+
+    user.refereshToken = refereshToken
+    user.save({ validateBeforeSave: false })
+
+    return {accessToken,refereshToken}
+
+  } catch (error) {
+    throw new apiError(500, "something went wrong during genarating access and referesh token")
+  }
+}
+
 const registerUser = asynHandler(async(req,res)=>{
    // get user details from frontend
    // taking data from postman 
@@ -65,6 +81,55 @@ const registerUser = asynHandler(async(req,res)=>{
   )
 });
 
+const loginUser = asynHandler(async(req,res)=>{
+  // req body data 
+  // user name or email validation
+  // find the user  
+  //  password validation 
+  // access and refresh token
+  // send cookies 
+  const {username,email,password}=req.body
+  if(!username||!email){
+    throw new apiError(400,"username or password is required")
+
+  }
+  const user = await user.findOne({
+    $or:[{username},{email}]
+  })
+  if(!user){
+    throw new apiError(404,"user not found")
+  }
+  const isCorrect = await user.ispasswordCorrect(password)
+  if(!isCorrect){
+    throw new apiError(404,"invalid user credential")
+  }
+ const {accessToken,refereshToken}= await generateAccessAndRefereshToken(user._id)
+ const loggedInUser = await User.findById(user._id).select("-password -refereshToen")
+ const options={
+  httpOnly:true,
+  secure:true
+ }
+
+ return res.status(200).cookie("accessToken",accessToken,options)
+.cookie("refreshToekn",refereshToken,options)
+.json(
+  new ApiResponse(
+    200,
+    {
+      user: loggedInUser,accessToken,
+      refereshToken
+    },
+    "user login successfully"
+  )
+)
+
+})
+
+const logoutUser = asynHandler(async(req,res)=>{
+  
+})
+
 export {
     registerUser,
+    loginUser
 }
