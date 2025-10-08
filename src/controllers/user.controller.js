@@ -126,10 +126,31 @@ const loginUser = asynHandler(async(req,res)=>{
 })
 
 const logoutUser = asynHandler(async(req,res)=>{
+  User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $set:{
+        refereshToken:undefined
+      }
+    },
+    {
+      new:true
+    }
+  )
+  const options={
+  httpOnly:true,
+  secure:true
+ }
+ return res
+ .status(200)
+ .clearCookie("accessToken",options)
+ .clearCookie("refereshToken",options)
+ .json(new ApiResponse(200,{},"user logout successfully"))
   
 })
 
 export {
     registerUser,
-    loginUser
+    loginUser,
+    logoutUser
 }
