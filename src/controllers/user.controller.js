@@ -1,10 +1,11 @@
 import express from 'express'
 import {asynHandler} from "../utils/asyncHandeler.js";
-import {apiError} from "../utils/apiError.js";
+import {ApiError, apiError} from "../utils/apiError.js";
 import {User} from "../models/user.models.js"
 import { uploadOnCloudinary } from '../utils/cloudinary.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
-
+import {jwt} from "jsonwebtoken"
+ 
 const generateAccessAndRefereshToken = async (userId) => {
   try {
     await User.findById(userId)
@@ -89,7 +90,7 @@ const loginUser = asynHandler(async(req,res)=>{
   // access and refresh token
   // send cookies 
   const {username,email,password}=req.body
-  if(!username||!email){
+  if(!username && !email){
     throw new apiError(400,"username or password is required")
 
   }
@@ -147,6 +148,44 @@ const logoutUser = asynHandler(async(req,res)=>{
  .clearCookie("refereshToken",options)
  .json(new ApiResponse(200,{},"user logout successfully"))
   
+})
+
+const refreshAccessToken = asynHandler(async(req,res)=>{
+const incomingRefreshToken = req.cookies.refereshToken || req.body.refereshToken
+if(!incomingRefreshToken){
+  throw new ApiError(401,"unauthorized request")
+}
+try {
+  const decodedToken = jwt.verify(
+    incomingRefreshToken,
+    process.env.REFRESH_TOKEN_SECRET,
+  
+  )
+   const user= await User.findById(decodedToken?._id)
+   if(!user){
+    throw new ApiError(401,"Invalid refersh token")
+   }
+   if(incomingRefreshToken !== user?.refereshToken){
+    throw new apiError(401,"Refresh token is used and expired, login again")
+   }
+  
+   const options={
+    httpOnly:true,
+    secure:true 
+   }
+  const {accessToken,newrefereshToken} = await generateAccessAndRefereshToken(user._id)
+  
+   return res
+   .status(200)
+   .cookie("accessToken",accessToken,options) 
+   .cookie("refereshToken",newrefereshToken,options)
+   .json(
+    new ApiResponse(200,{accessToken,refereshToken: newrefereshToken},"Access token refreshed")
+   )
+} catch (error) {
+  throw new ApiError(401,"Invalid refersh token ")
+  
+}
 })
 
 export {
